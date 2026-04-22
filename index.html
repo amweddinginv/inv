@@ -567,7 +567,10 @@ function setLang(lang) {
 
   // Select options
   const gSel = document.getElementById('sel-guests');
-  if (gSel) { Array.from(gSel.options).forEach((o,i) => { if(t.guestOpts[i]) o.innerHTML = t.guestOpts[i]; }); }
+  const params2 = new URLSearchParams(window.location.search);
+  const gKey = (params2.get('guest') || '').toLowerCase().trim();
+  const hasCustomGuest = typeof GUESTS !== 'undefined' && GUESTS[gKey];
+  if (gSel && !hasCustomGuest) { Array.from(gSel.options).forEach((o,i) => { if(t.guestOpts[i]) o.innerHTML = t.guestOpts[i]; }); }
   const dSel = document.getElementById('sel-diet');
   if (dSel) { Array.from(dSel.options).forEach((o,i) => { if(t.dietOpts[i]) o.innerHTML = t.dietOpts[i]; }); }
 
@@ -630,18 +633,29 @@ function openEnvelope() {
 }
 
 function startAnimations() {
-  // Look up guest name from guests.js using ?guest= key
   const params = new URLSearchParams(window.location.search);
   const key = (params.get('guest') || '').toLowerCase().trim();
-  const guestName = (typeof GUESTS !== 'undefined' && GUESTS[key]) ? GUESTS[key] : null;
-  if (guestName) {
-    document.getElementById('greetingName').textContent = guestName;
+  const guest = (typeof GUESTS !== 'undefined' && GUESTS[key]) ? GUESTS[key] : null;
+
+  if (guest) {
+    // Show personalized greeting
+    document.getElementById('greetingName').textContent = guest.name;
     const g = document.getElementById('guestGreeting');
     g.style.display = 'block';
     g.style.opacity = '0';
     g.style.transform = 'translateY(15px)';
     g.style.transition = 'opacity 1s ease, transform 1s ease';
     setTimeout(() => { g.style.opacity = '1'; g.style.transform = 'translateY(0)'; }, 200);
+
+    // Populate guest dropdown with their specific options
+    const sel = document.getElementById('sel-guests');
+    sel.innerHTML = '';
+    guest.options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      sel.appendChild(o);
+    });
   }
 
   ['el0','el1','el2','el3','el4','el5','el6','el7','el8','el9','el10','el12','el11'].forEach((id,i) => {
